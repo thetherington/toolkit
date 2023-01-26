@@ -21,7 +21,7 @@ func TestTools_RandomString(t *testing.T) {
 	}
 }
 
-// table test
+// table tests
 var uploadTests = []struct {
 	name          string
 	allowedTypes  []string
@@ -31,6 +31,19 @@ var uploadTests = []struct {
 	{name: "allowed no rename", allowedTypes: []string{"image/jpg", "image/png"}, renameFile: false, errorExpected: false},
 	{name: "allowed rename", allowedTypes: []string{"image/jpg", "image/png"}, renameFile: true, errorExpected: false},
 	{name: "not allowed", allowedTypes: []string{"image/jpg"}, renameFile: false, errorExpected: true},
+}
+
+var slugTests = []struct {
+	name          string
+	s             string
+	expected      string
+	errorExpected bool
+}{
+	{name: "valid string", s: "now is the time", expected: "now-is-the-time", errorExpected: false},
+	{name: "empty string", s: "", expected: "", errorExpected: true},
+	{name: "japanese string", s: "こんにちは世界", expected: "", errorExpected: true},
+	{name: "japanese string and roman", s: "こんにちは世界 hello world", expected: "hello-world", errorExpected: false},
+	{name: "complex string", s: "Now is the time for all GOOD men! + fish & sushi & ^123", expected: "now-is-the-time-for-all-good-men-fish-sushi-123", errorExpected: false},
 }
 
 func TestTools_UploadFiles(t *testing.T) {
@@ -166,4 +179,19 @@ func TestTools_CreateDirIfNotExists(t *testing.T) {
 	}
 
 	_ = os.Remove("./testdata/myDir")
+}
+
+func TestTools_Slugify(t *testing.T) {
+	var testTool Tools
+
+	for _, e := range slugTests {
+		slug, err := testTool.Slugify(e.s)
+		if err != nil && !e.errorExpected {
+			t.Errorf("%s: error received when none expected: %s", e.name, err.Error())
+		}
+
+		if !e.errorExpected && slug != e.expected {
+			t.Errorf("%s: wrong slug returned; expected %s but go %s", e.name, e.expected, slug)
+		}
+	}
 }
